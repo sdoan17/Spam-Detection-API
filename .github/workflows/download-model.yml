@@ -1,0 +1,45 @@
+name: Download AI model
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out project code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install download dependency
+        run: python -m pip install "huggingface_hub==2.0.0"
+
+      - name: Download model from Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO_ID: ${{ vars.HF_REPO_ID }}
+          HF_REVISION: ${{ vars.HF_REVISION }}
+        run: python scripts/download_model.py
+
+      - name: Save downloaded model as a workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: spam-classifier-model
+          path: |
+            models/spam-model.keras
+            models/spam-classifier-tokenizer.json
+            models/spam-classifier-metadata.json
+            models/download-manifest.json
+          if-no-files-found: error
+          retention-days: 7
